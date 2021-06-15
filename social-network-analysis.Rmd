@@ -1,0 +1,263 @@
+---
+title: "HUDK4051: Social Network Analysis"
+author: "Charles Lang & Yucheng Pan"
+date: "1/26/2018"
+output: html_document
+---
+
+In this assignment you will be generating and analyzing three social networks (also known as graphs or sociograms) based on three different measures. You will be using data from:
+
+Representing Classroom Social Structure. Melbourne: Victoria Institute of
+Secondary Education, M. Vickers and S. Chan, (1981)
+
+Available from the Index of Complex Networks ([ICON](https://icon.colorado.edu/#!/))
+
+The data were collected by Vickers & Chan from 29 seventh grade students in a school in Victoria, Australia. Students were asked to nominate their classmates on a number of relations including the following three "layers":  
+
+1. Who do you get on with in the class?  
+2. Who are your best friends in the class?  
+3. Who would you prefer to work with?  
+
+You have a data set for each of these questions, please complete the following tasks.
+
+## Data Wrangling
+```{r}
+library(tidyr)
+library(dplyr)
+library(igraph)
+```
+
+Manipulate each of the data sets so that it is suitable for building a social network using iGraph.
+
+*If you have not previously taken HUDK4050 please sign up for office hours before you attempt this project*
+
+```{r}
+gw <- read.csv("get.on.with.csv", header=T)
+gw$from <- as.factor(gw$from)
+gw$to <- as.factor(gw$to)
+edgegw <- count(gw,to,from)
+vertexgw <- select(gw,from,gender.from)
+vertexgw <- unique(vertexgw)
+vertexgw$gender.from <- as.factor(vertexgw$gender.from)
+
+bf <- read.csv("best.friends.csv", header=T)
+bf$from <- as.factor(bf$from)
+bf$to <- as.factor(bf$to)
+edgebf <- count(bf,to,from)
+vertexbf <- select(bf,from,gender.from)
+vertexbf <- unique(vertexbf)
+vertexbf$gender.from <- as.factor(vertexbf$gender.from)
+
+ww <- read.csv("work.with.csv", header=T)
+ww$from <- as.factor(ww$from)
+ww$to <- as.factor(ww$to)
+edgeww <- count(ww,to,from)
+vertexww <- select(ww,from,gender.from)
+vertexww <- unique(vertexww)
+vertexww$gender.from <- as.factor(vertexww$gender.from)
+```
+
+## Visualize the Networks
+
+Create a graph for each of the data sets, are the graphs directed or undirected? Visualize each of the graphs you have created and color the nodes according to gender. Save pdfs of your graphs in this directory for upload to Github.
+
+```{r}
+g <- graph.data.frame(edgegw, directed = T, vertices = vertexgw)
+#pdf(file = "getonwith.pdf")
+plot.igraph(g,
+            edge.color='grey17',
+            vertex.color=vertexgw$gender.from,
+            edge.width=1,
+            vertex.label.color='black',
+            vertex.label.cex=0.5,
+            edge.arrow.size = 0.5, 
+            edge.arrow.width = 0.5,
+            )
+```
+
+```{r}
+f <- graph.data.frame(edgebf, directed = T, vertices = vertexbf)
+#pdf(file = "bestfriends.pdf")
+plot.igraph(f,
+            edge.color='grey17',
+            vertex.color=vertexbf$gender.from,
+            edge.width=1,
+            vertex.label.color='black',
+            vertex.label.cex=0.5,
+            edge.arrow.size = 0.5, 
+            edge.arrow.width = 0.5,
+            )
+```
+
+
+```{r}
+w <- graph.data.frame(edgeww, directed = T, vertices = vertexww)
+#(file = "workwith.pdf")
+plot.igraph(w,
+            edge.color='grey17',
+            vertex.color=vertexww$gender.from,
+            edge.width=1,
+            vertex.label.color='black',
+            vertex.label.cex=0.5,
+            edge.arrow.size = 0.5, 
+            edge.arrow.width = 0.5,
+            )
+```
+
+
+**The graphs are directed.**
+
+## Centrality Measures
+
+Who in the class has the highest degree centrality for each measure?
+
+```{r}
+sort(degree(g), decreasing = TRUE)
+sort(degree(f), decreasing = TRUE)
+sort(degree(w), decreasing = TRUE)
+```
+
+**#11 has the highest degree centrality for get-on-with measure. #8 has the highest degree centrality for the best friends measureand #6 has the highest degree centrality for work-with measure.**
+
+Does **degree centrality** mean the same thing for each of your networks? Does it make sense for each of your networks?
+
+**The degree centrality doesn't mean the same thing for different networks. In best friends network, it means people are more likely to be his or her friend. And in other networks, it has the other meaning. However, it makes sense.**
+
+Who in the class has the highest closeness centrality?
+
+```{r}
+sort(closeness(g), decreasing = TRUE)
+sort(closeness(f), decreasing = TRUE)
+sort(closeness(w), decreasing = TRUE)
+```
+
+**#14 and #16 have the highest closeness centrality for get-on-with measure. #21 has the highest closeness centrality for the best friends measure and #21 has the highest closeness centrality for work-with measure.**
+
+How does **betweeness centrality** differ from degree centrality? Is one more useful than the other? Does their utility differ between your three networks?
+
+**Betweenness centrality quantifies the number of times a node acts as a bridge along the shortest path between two other nodes. Degree centrality is defined as the number of links incident upon a node. They are both useful. The utility differ in three networks.**
+
+## Simple structures
+
+Count the number of dyads and the number and type of triads using the following commands.
+```{r}
+dyad_census(g)
+dyad_census(f)
+dyad_census(w)
+```
+[Documentation](http://igraph.org/r/doc/dyad_census.html)
+
+```{r}
+triad_census(g)
+triad_census(f)
+triad_census(w)
+```
+[Documentation](http://igraph.org/r/doc/triad_census.html)
+
+Do these metrics tell you anything about the networks? If so what?
+
+**The deep links are less than the shallow links.**
+
+## Cliques
+
+Answer the following questions using the [clique functions](http://igraph.org/r/doc/cliques.html)
+
+What is the size of the largest clique(s) in each of the three networks?
+
+```{r}
+clique_num(g) #largest clique is 12
+clique_num(f) #largest clique is 7
+clique_num(w) #largest clique is 9
+```
+
+Which nodes/vertices are in the largest cliques for the three networks? Is there much overlap?
+
+```{r}
+largest_cliques(g)
+largest_cliques(f)
+largest_cliques(w)
+```
+
+**There is much overlap.**
+
+How many **maximal cliques** are there in each of the networks?
+
+```{r}
+count_max_cliques(g)# There are 64 maximal cliques
+count_max_cliques(f)# There are 35 maximal cliques
+count_max_cliques(w)# There are 36 maximal cliques
+```
+
+## Components & Cutpoints
+
+Find the cutpoints (articulation points) for each of the three networks you generated. What does this tell you about the graphs? Does what you find match a visual exploration of the networks?
+
+```{r}
+articulation_points(g)
+articulation_points(f)
+articulation_points(w)
+```
+**A vertex in an undirected connected graph is an articulation point (or cut vertex) iff removing it (and edges through it) disconnects the graph. Articulation points represent vulnerabilities in a connected network – single points whose failure would split the network into 2 or more components.**
+
+## Putting it all together
+
+Write a narrative description of the social ties among members of this 7th grade class using the network, centrality and structural metrics you have developed. Can you provide any recommendations to the teacher of this class based on your analysis? What other information would you want to know? Can you remember being in seventh grade, does this reflect your experience?
+
+- The #8 can be the organizer of some big event, because #8 has the highest score in best friends network.
+- The #11 can be the teaching assistant for #11 has the highest score in work-with network.
+- The work-with network is more spase than the best friends network and the work-with network is vulnerabile. So, teachers should design more group work assignment to help student develop teamwork spirit.
+- Yes, it reflects my experience. At that time, we had many good friends because we had many topics in common, but when we finished group work, we couldn't trust each other because we didn't know each other's academic situation.
+
+## Test out your skills
+
+Find another data set that interests you on the ([ICON](https://icon.colorado.edu/#!/)) website. Load the data into igraph, visualize the graph and use one of the metrics you have learned to characterize structures within the graph.
+
+```{r}
+comp_work <- read.csv("Aarhus_computer_department_work.csv")
+names(comp_work) <- c('from', 'to', 'weight')
+edgecw <- select(comp_work, from, to)
+vertexcw <- union(comp_work$from,comp_work$to)
+vertexcw <- unique(vertexcw)
+cw <- graph.data.frame(edgecw, directed = F, vertices = vertexcw)
+```
+
+```{r}
+plot.igraph(cw,
+            edge.color='grey17',
+            edge.width=1,
+            vertex.label.color='black',
+            vertex.label.cex=0.5,
+            edge.arrow.size = 0.5, 
+            edge.arrow.width = 0.5,
+            )
+```
+
+```{r}
+sort(degree(cw), decreasing = TRUE) # 7 has the highest degree scores.
+```
+```{r}
+sort(closeness(cw), decreasing = TRUE) # 7 has the highest degree scores.
+```
+
+```{r}
+clique_num(cw) # There are 6 cliques
+```
+```{r}
+largest_cliques(cw)
+```
+
+
+```{r}
+count_max_cliques(cw) # The max cliques has 70 nodes.
+```
+
+
+```{r}
+articulation_points(cw) # 51 is the articulation point
+```
+- #7 is an important department.
+- The connection should be strengthened, because there is a articulation point
+
+> Citation: Matteo Magnani, Barbora Micenkova, and Luca Ross, "Combinatorial Analysis of Multiple Networks." arXiv:1303.4986 (2013) [Link](https://arxiv.org/abs/1303.4986)
+
+> Dataset: [Aarhus CS department relationship network](https://manliodedomenico.com/data.php)
