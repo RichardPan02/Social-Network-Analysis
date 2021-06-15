@@ -1,0 +1,63 @@
+---
+title: "Social Network Analysis"
+author: "Yucheng Pan"
+output: html_document
+---
+
+## Data Wrangling
+```{r}
+library(tidyr)
+library(dplyr)
+library(igraph)
+```
+
+
+```{r}
+comp_work <- read.csv("Aarhus_computer_department_work.csv")
+names(comp_work) <- c('from', 'to', 'weight')
+edgecw <- select(comp_work, from, to)
+vertexcw <- union(comp_work$from,comp_work$to)
+vertexcw <- unique(vertexcw)
+cw <- graph.data.frame(edgecw, directed = F, vertices = vertexcw)
+```
+
+```{r}
+plot.igraph(cw,
+            edge.color='grey17',
+            edge.width=1,
+            vertex.label.color='black',
+            vertex.label.cex=0.5,
+            edge.arrow.size = 0.5, 
+            edge.arrow.width = 0.5,
+            )
+```
+
+```{r}
+sort(degree(cw), decreasing = TRUE) # 7 has the highest degree scores.
+```
+```{r}
+sort(closeness(cw), decreasing = TRUE) # 7 has the highest degree scores.
+```
+
+```{r}
+clique_num(cw) # There are 6 cliques
+```
+```{r}
+largest_cliques(cw)
+```
+
+
+```{r}
+count_max_cliques(cw) # The max cliques has 70 nodes.
+```
+
+
+```{r}
+articulation_points(cw) # 51 is the articulation point
+```
+- #7 is an important department.
+- The connection should be strengthened, because there is a articulation point
+
+> Citation: Matteo Magnani, Barbora Micenkova, and Luca Ross, "Combinatorial Analysis of Multiple Networks." arXiv:1303.4986 (2013) [Link](https://arxiv.org/abs/1303.4986)
+
+> Dataset: [Aarhus CS department relationship network](https://manliodedomenico.com/data.php)
